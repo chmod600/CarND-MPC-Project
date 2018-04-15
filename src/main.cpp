@@ -152,7 +152,6 @@ int main() {
 
           // ----------------YELLOW LINE-------------------------------
 
-
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
           // Display the MPC predicted trajectory
@@ -173,6 +172,8 @@ int main() {
 
           msgJson["steering_angle"] = vars[0] / (deg2rad(25) * Lf);
           msgJson["throttle"] = vars[1];
+
+          cout << vars[0] << "===" << vars.size() << endl;
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
