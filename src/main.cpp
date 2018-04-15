@@ -85,12 +85,40 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          vector<double> ptsx = j[1]["ptsx"];
-          vector<double> ptsy = j[1]["ptsy"];
-          double px = j[1]["x"];
-          double py = j[1]["y"];
-          double psi = j[1]["psi"];
-          double v = j[1]["speed"];
+          vector<double> ptsx = j[1]["ptsx"]; // x pos of waypoint
+          vector<double> ptsy = j[1]["ptsy"]; // y pos of waypoint
+          double px = j[1]["x"]; // car's x pos
+          double py = j[1]["y"]; // car's y pos
+          double psi = j[1]["psi"]; // car's angle
+          double v = j[1]["speed"]; // car's speed
+
+          // Simplify position and heading of the car
+          for (unsigned int i = 0; i < ptsx.size(); ++i) {
+            double shift_x = ptxs[i] - px;
+            double shift_y = ptsy[i] - py;
+
+            // This ensures car is having the same orientation as
+            // the line over the waypoints i.e. horizontal-ish
+            ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
+            ptsy[i] = (shift_x * sin(0 - psi) + shift_y * cos(0 - psi));
+          }
+
+          // Transform waypoints from vector<double> to Eigen Vector
+          // This is needed to be able to pass the vector to the polyfit function
+          double* ptrx = &ptsx[0];
+          Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, 6);
+
+          double* ptry = &ptsy[0];
+          Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, 6);
+
+          // Get 3rd order polynomial that fits the waypoints
+          auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
+
+          // Get CTE
+          double cte = polyeval(coeffs, 0); // x is set to origin since we shifted them
+
+          // Get Error PSI
+
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -107,7 +135,7 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
+          //Display the MPC predicted trajectory
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
 
