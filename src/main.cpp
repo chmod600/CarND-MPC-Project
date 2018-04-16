@@ -88,14 +88,18 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"]; // x pos of waypoint
           vector<double> ptsy = j[1]["ptsy"]; // y pos of waypoint
-
           double px = j[1]["x"]; // car's x pos
           double py = j[1]["y"]; // car's y pos
           double psi = j[1]["psi"]; // car's angle
           double v = j[1]["speed"]; // car's speed
+          double steer_value = j[1]["steering_angle"];
+          double throttle_value = j[1]["throttle"];
+          json msgJson;
+          double Lf = 2.67;
 
           // Simplify position and heading of the car
           for (unsigned int i = 0; i < ptsx.size(); ++i) {
+
             double shift_x = ptsx[i] - px;
             double shift_y = ptsy[i] - py;
 
@@ -121,8 +125,7 @@ int main() {
           double cte = polyeval(coeffs, 0); // x is set to origin since we shifted them
 
           // Get Error PSI
-          // double epsi = psi -
-          //   atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] * pow(px, 2))
+          // double epsi = psi - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] * pow(px, 2))
           // We've set psi, px, py to 0, so the above equation reduces to:
           double epsi = -atan(coeffs[1]);
           Eigen::VectorXd state(6);
@@ -134,6 +137,7 @@ int main() {
           // We have coeffs which contains the path we want to follow
           // i.e. path defined by the polyfit function
           auto vars = mpc.Solve(state, coeffs);
+          msgJson["vars"] = vars;
 
           // ----------------YELLOW LINE-------------------------------
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
@@ -166,10 +170,6 @@ int main() {
               mpc_y_vals.push_back(vars[i]);
             }
           }
-          double Lf = 2.67;
-
-          json msgJson;
-
           msgJson["steering_angle"] = vars[0] / (deg2rad(25) * Lf);
           msgJson["throttle"] = vars[1];
 
