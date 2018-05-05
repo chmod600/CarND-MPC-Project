@@ -94,9 +94,6 @@ int main() {
           double py = j[1]["y"]; // car's y pos
           double psi = j[1]["psi"]; // car's angle
           double v = j[1]["speed"]; // car's speed
-
-          double steer_value = j[1]["steering_angle"]; // delta / car's steering angle
-          double throttle_value = j[1]["throttle"]; // car's throttle / acceleration
           double Lf = 2.67;
 
           // Simplify position and heading of the car
@@ -172,13 +169,13 @@ int main() {
           msgJson["steering_angle"] = vars[0] / (deg2rad(25) * Lf); // next steer
           msgJson["throttle"] = vars[1]; // next acceleration
 
-          // cout << vars[0] << "===" << vars.size() << endl;
+          cout << vars[0] << "===" << vars.size() << endl;
 
-          // msgJson["next_x"] = next_x_vals;
-          // msgJson["next_y"] = next_y_vals;
+          msgJson["next_x"] = next_x_vals;
+          msgJson["next_y"] = next_y_vals;
 
-          // msgJson["mpc_x"] = mpc_x_vals;
-          // msgJson["mpc_y"] = mpc_y_vals;
+          msgJson["mpc_x"] = mpc_x_vals;
+          msgJson["mpc_y"] = mpc_y_vals;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
 
