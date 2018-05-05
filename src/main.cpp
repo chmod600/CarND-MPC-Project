@@ -33,6 +33,7 @@ string hasData(string s) {
 }
 
 // Evaluate a polynomial.
+// This is like - a3*x^3 + a2*x^2 + a1x^1 + a0*x^0
 double polyeval(Eigen::VectorXd coeffs, double x) {
   double result = 0.0;
   for (int i = 0; i < coeffs.size(); i++) {
@@ -84,6 +85,7 @@ int main() {
         auto j = json::parse(s);
         string event = j[0].get<string>();
         if (event == "telemetry") {
+          json msgJson;
 
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"]; // x pos of waypoint
@@ -92,9 +94,9 @@ int main() {
           double py = j[1]["y"]; // car's y pos
           double psi = j[1]["psi"]; // car's angle
           double v = j[1]["speed"]; // car's speed
-          double steer_value = j[1]["steering_angle"];
-          double throttle_value = j[1]["throttle"];
-          json msgJson;
+
+          double steer_value = j[1]["steering_angle"]; // delta / car's steering angle
+          double throttle_value = j[1]["throttle"]; // car's throttle / acceleration
           double Lf = 2.67;
 
           // Simplify position and heading of the car
@@ -120,24 +122,21 @@ int main() {
           // Get 3rd order polynomial that fits the waypoints
           auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
 
-
-          // Get CTE and get a Y value
+          // Get CTE and get a Y value.
           double cte = polyeval(coeffs, 0); // x is set to origin since we shifted them
 
           // Get Error PSI
           // double epsi = psi - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] * pow(px, 2))
           // We've set psi, px, py to 0, so the above equation reduces to:
           double epsi = -atan(coeffs[1]);
-          Eigen::VectorXd state(6);
 
           // Build the state vector
           // x, y, psi are 0
+          Eigen::VectorXd state(6);
           state << 0, 0, 0, v, cte, epsi;
-
           // We have coeffs which contains the path we want to follow
           // i.e. path defined by the polyfit function
           auto vars = mpc.Solve(state, coeffs);
-          msgJson["vars"] = vars;
 
           // ----------------YELLOW LINE-------------------------------
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
@@ -154,9 +153,9 @@ int main() {
             next_y_vals.push_back(polyeval(coeffs, (poly_inc * i)));
           }
 
-          // ----------------YELLOW LINE-------------------------------
+          // ----------------YELLOW LINE ENDS--------------------------
 
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
+          // add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
           // Display the MPC predicted trajectory
           // GREEN LINE
@@ -170,20 +169,20 @@ int main() {
               mpc_y_vals.push_back(vars[i]);
             }
           }
-          msgJson["steering_angle"] = vars[0] / (deg2rad(25) * Lf);
-          msgJson["throttle"] = vars[1];
+          msgJson["steering_angle"] = vars[0] / (deg2rad(25) * Lf); // next steer
+          msgJson["throttle"] = vars[1]; // next acceleration
 
-          cout << vars[0] << "===" << vars.size() << endl;
+          // cout << vars[0] << "===" << vars.size() << endl;
 
-          msgJson["next_x"] = next_x_vals;
-          msgJson["next_y"] = next_y_vals;
+          // msgJson["next_x"] = next_x_vals;
+          // msgJson["next_y"] = next_y_vals;
 
-          msgJson["mpc_x"] = mpc_x_vals;
-          msgJson["mpc_y"] = mpc_y_vals;
+          // msgJson["mpc_x"] = mpc_x_vals;
+          // msgJson["mpc_y"] = mpc_y_vals;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
 
-          std::cout << msg << std::endl;
+          // std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
