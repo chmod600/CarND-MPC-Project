@@ -1,3 +1,12 @@
+// Akshay Khole
+// MPC Project
+
+// References -
+// 1. Udacity lessons
+// 2. Project Walkthrough / Q&A
+// 3. Slack channel
+// 4. Mentor support
+
 #include <math.h>
 #include <uWS/uWS.h>
 #include <chrono>
